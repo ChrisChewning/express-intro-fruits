@@ -12,13 +12,22 @@ const Fruits = require('../models/fruits'); //Require the model Fruits.
 // Remember Model is a representation of our data. The model should be capitalized.
 
 //---------------------------   GET ROUTES  ----------------------------------
+//                       this gets all the fruits.
 
 //THIS IS localhost:3000/fruits. This shows the whole model
 router.get('/', (req, res) => {
-  res.render('index.ejs', {
-    fruits: Fruits
-// res.send(Fruits)?
-});
+  Fruits.find({}, (err, allFruits) => {
+    //finding every fruit without a search parameter
+    if (err) {
+      res.send(err);
+    } else {
+
+      //allFruits is the response from our db. When you are finding all of something it returns an array.
+      res.render('index.ejs', {
+        fruits: allFruits
+      });
+    }
+  });
 });
 
 // #2 CHECK (INDEX #S OF OBJECT). This
@@ -27,26 +36,34 @@ router.get('/', (req, res) => {
 // });
 
 
-//------------------------   router.POST TO MAKE A NEW ROUTE ----------------------
+//--------------------   router.POST TO MAKE A NEW ROUTE ----------------------
 
 // router.post will post the data up onto the page.
 router.post('/', (req, res) => {
 
-// grab the info from req.body and push it into the model. req.body is an object. the model is an array.
-  if(req.body.readyToEat === 'on'){
+  // grab the info from req.body and push it into the model. req.body is an object. the model is an array.
+  if (req.body.readyToEat === 'on') {
     req.body.readyToEat = true;
   } else {
     req.body.readyToEat = false;
   }
-  //adding the contents of the form to the model.
-  Fruits.push(req.body);
 
-  console.log(req.body, 'this is req.body, should be form info');
-  // res.send(Fruits)
-  res.redirect('/fruits'); //res.redirect redirects the user back to whatever you write in the ('/...').
-})
+  //adding the contents of the form to the model. the collection is in the database. This checks if we actually get a response.
+  Fruits.create(req.body, (err, createdFruit) => {
+    if (err) {
+      console.log(err)
+      res.send(err);
+    } else {
+      console.log(createdFruit)
+      //we want to respond to the client after we get the response from the database.
+      res.redirect('/fruits'); //res.redirect redirects the user back to whatever you write in the ('/...').
+    }
+  });
+});
 
-//-----------------------  router.GET TO MAKE A NEW ROUTE ------------------------
+
+
+//---------------------  router.GET TO MAKE A NEW ROUTE -----------------------
 //Create our new route above the index route. the order is important.
 //THIS PAGE IS localhost:3000/fruits/new
 router.get('/new', (req, res) => {
@@ -62,32 +79,64 @@ router.get('/new', (req, res) => {
 
 //to display a single fruit (this is why it's fruit: Fruits)
 
-router.get('/:index/edit', (req, res) => {
-res.render('edit.ejs', {
-  fruit: Fruits[req.params.index],
-  index: req.params.index
-});
-  // res.redirect('/fruits'); doesn't work.
+router.get('/:id/edit', (req, res) => {
+  //^^^ when you want to grab this out, you use req.params
+
+  Fruits.findById(req.params.id, (err, foundFruit) => {
+
+    res.render('edit.ejs', {
+      fruit: foundFruit //finds one fruit
+      // index: req.params.index
+    });
+  });
 });
 
 
 //------------------------------ SHOW ROUTE ---------------------------------
 //THIS PAGE IS localhost:3000/fruits/0 /1 or /2
-router.get('/:index', (req, res) => {
-  //index is capturing any text that you write after /fruits.
-  res.render('show.ejs', {
-  fruits: Fruits[req.params.index]
-  // console.log(req.params, ' this is req.params');
-  //Fruits is capitalized b.c it's the model.
-  //reck dot params grabs everything after the slash. it is the property. The value of reck dot params is whatever is written after it. so 0: routerle 1: pear 2: banana. those are in your parameter.
-  //this creates a 'fruit' variable  in the show page
-})
+
+
+// Show Route
+router.get('/:id', (req, res) => {
+
+  // Render is when you want to send
+  // an ejs template to the client
+  Fruits.findById(req.params.id, (err, foundFruit) => {
+
+    if(err){
+      console.log(err, ' this is error in delete');
+      res.send(err);
+    } else {
+//check to see if it is updating correctly.
+  // console.log(deletedFruit, ' this is the deletedFruit in the delete route');
+
+      res.render('show.ejs', {
+      fruit: foundFruit// This creates
+      // a "fruit" variable in the show page
+    })
+  }
+  })
 });
 
 
-//------------------------------ UPDATE ROUTE ---------------------------------
+// router.get('/:id', (req, res) => {
+//   //index is capturing any text that you write after /fruits.
+//
+//   Fruits.findById(req.params.id, (err, foundFruit) => {
+//
+//   res.render('show.ejs', {
+//     fruit: foundFruit
+//     // console.log(req.params, ' this is req.params');
+//     //Fruits is capitalized b.c it's the model.
+//     //reck dot params grabs everything after the slash. it is the property. The value of reck dot params is whatever is written after it. so 0: routerle 1: pear 2: banana. those are in your parameter.
+//     //this creates a 'fruit' variable  in the show page
+//   });
+// });
+// });
 
-router.put('/:index', (req, res) => {
+//---------------------------- PUT / UPDATE ROUTE -----------------------------
+
+router.put('/:id', (req, res) => {
   console.log(' am I hitting the put route');
   //check to see if I'm hitting the route. If I'm not hitting the route, there's probably something wrong with the action of my form.
 
@@ -96,33 +145,59 @@ router.put('/:index', (req, res) => {
 
 
 
-  if(req.body.readyToEat === 'on'){
+  if (req.body.readyToEat === 'on') {
     req.body.readyToEat = true;
   } else {
-      req.body.readyToEat = false;
-    }
-    // const num = [1, 2, 3];
-      // num[1] = 4; //now 2 will be 4.
-      // same idea for Fruits[req.params.index] = req.body
-      Fruits[req.params.index] = req.body;
-      console.log(Fruits, 'check our model');
-      //check to see if it is updating correctly.
-      res.redirect('/fruits');
+    req.body.readyToEat = false;
+  }
+  // const num = [1, 2, 3];
+  // num[1] = 4; //now 2 will be 4.
+  // same idea for Fruits[req.params.index] = req.body
+  // Fruits[req.params.index] = req.body;
+
+
+//req.body is the updated form info.
+// new: true says return to me the updated object. by default it is false.
+//things that are default you don't have to specify.
+
+//1st arg: document you are look for.
+//2nd arg: content you updating it with.
+  Fruits.findByIdAndUpdate(req.params.id, req.body, {new: true}, (err, updatedFruit) => {
+    if(err){
+      res.send(err);
+    } else {
+//check to see if it is updating correctly.
+  console.log(updatedFruit, 'check our model');
+  //check to see if it is updating correctly.
+  res.redirect('/fruits');
+}
+})
 });
 
 
 //------------------------------ DELETE ROUTE ---------------------------------
-router.delete('/:index', (req, res) => {
-  console.log('hi');
-	Fruits.splice(req.params.index, 1);
+router.delete('/:id', (req, res) => {
+  console.log('req.body');
+  // Fruits.splice(req.params.id, 1); //fruits.splice won't work bc it's not an array any more.
+
+  //you were saying:
   //index is [i] in the array. so you're saying req.params.index, delete 1 space.
 
   //array method. it splices (removes) off items from an array.
-// arr.splice(start, delete count)  ex: 0 starts at 0, 1 would just delete 1 item, to the right of where you put. ex: ['hi', 'hello', 'howdy'] 1, 1 would be return ['hi', 'hello'] b.c you started at hello (index 1) and deleted 1 off the array (howdy)
+  // arr.splice(start, delete count)  ex: 0 starts at 0, 1 would just delete 1 item, to the right of where you put. ex: ['hi', 'hello', 'howdy'] 1, 1 would be return ['hi', 'hello'] b.c you started at hello (index 1) and deleted 1 off the array (howdy)
 
 
-  //F not f b.c you are splicing off of the model.
-  res.redirect('/fruits');  //redirect back to index route
+  Fruits.findByIdAndDelete(req.params.id, (err, deletedFruit) => {
+    if(err){
+      console.log(err, ' this is error in delete');
+      res.send(err);
+    } else {
+//check to see if it is updating correctly.
+  console.log(deletedFruit, ' this is the deletedFruit in the delete route');
+  //check to see if it is updating correctly.
+  res.redirect('/fruits');
+}
+})
 });
 
 

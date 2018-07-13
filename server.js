@@ -56,7 +56,9 @@
 // view is what we send to the client.
 // controller is the glue b.w the model and the view. It tells the view what to send back to the controller and what to update in the model.
 
-//methodOverride allows us to make a delete, put, or patch request. Our browser only allows get and post methods. methodOverride is a middleware. Middleware intercepts a request from the browser and before it makes its destination it does something to it.
+//methodOverride allows us to make a delete, put, or patch request.
+
+//Our browser only allows get and post methods. methodOverride is a middleware. Middleware intercepts a request from the browser and before it makes its destination it does something to it.
 
 //---------------------  REVIEW FROM TUESDAY ENDS  ------------------------
 
@@ -68,7 +70,12 @@ const express = require('express'); //make sure you've already init the express 
 const app = express(); //app is an object. our app variable as able to get all of the dependencies in express. that's why we can say app.get, app.post, app.delete, app.listen, etc.
 
 
+// THESE ARE BELOW
+// const bodyParser = require('body-parser');
+// const methodOverride = require('method-override');
 
+
+require('./db/db'); //folder is db and file is db
 
 
 //----------------   BODY PARSER & methodOverride middleware  -----------------
@@ -77,7 +84,10 @@ const app = express(); //app is an object. our app variable as able to get all o
 
 //2. Body parser allows you to read the contents of the form through req.body.
 const bodyParser = require('body-parser');
-app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.urlencoded({
+  extended: false
+}));
+
 var methodOverride = require('method-override');
 app.use(methodOverride('_method'));
 
@@ -117,3 +127,9 @@ app.use('/fruits', fruitController);
 app.listen(3000, () => {
   console.log('listening on port 3000');
 })
+
+//also an option...
+// const port = 3000;
+// app.listen(port, ()=> {
+//   console.log('listening on port 3000');
+// })
